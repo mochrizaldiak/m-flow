@@ -8,6 +8,7 @@ import {
 } from 'lucide-vue-next'
 
 const route = useRoute()
+console.log(route)
 </script>
 
 <template>
@@ -17,15 +18,15 @@ const route = useRoute()
     </main>
 
     <nav class="bottom-nav">
-      <NuxtLink to="/" :class="{ active: route.path === '/' }">
+      <NuxtLink to="/" :class="{ active: route.path === '/' || route.path.startsWith('/budget') }">
         <Home size="20" />
       </NuxtLink>
 
-      <NuxtLink to="/budget" :class="{ active: route.path === '/budget' }">
+      <NuxtLink to="/transaction" :class="{ active: route.path.startsWith('/transaction') }">
         <Wallet size="20" />
       </NuxtLink>
 
-      <NuxtLink to="/article" :class="{ active: route.path === '/article' }">
+      <NuxtLink to="/article" :class="{ active: route.path.startsWith('/article') }">
         <Newspaper size="20" />
       </NuxtLink>
 

@@ -1,9 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { openDB } from 'idb'
 
 definePageMeta({ layout: 'logged-in' })
 
+const router = useRouter()
 const nama = ref('User M-Flow')
 const skor = ref(75)
 const status = ref('')
@@ -31,6 +33,13 @@ onMounted(async () => {
   status.value = getStatus(skor.value)
   rekomendasi.value = getRekomendasi(skor.value)
 })
+
+const logout = async () => {
+  const db = await openDB('mflow-db', 1)
+  await db.delete('auth', 'session')
+  alert('👋 Kamu telah keluar.')
+  router.push('/login')
+}
 </script>
 
 <template>
@@ -47,6 +56,8 @@ onMounted(async () => {
       <h3 class="recommendation-title">Rekomendasi</h3>
       <p class="recommendation-text">{{ rekomendasi }}</p>
     </div>
+
+    <button class="logout-btn" @click="logout">Keluar</button>
   </div>
 </template>
 
@@ -119,5 +130,23 @@ onMounted(async () => {
   font-size: 14px;
   color: var(--color-text-light);
   line-height: 1.6;
+}
+
+.logout-btn {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 12px;
+  transition: background 0.2s;
+}
+
+.logout-btn:hover {
+  background-color: #d32f2f;
 }
 </style>

@@ -33,13 +33,103 @@ const dummyArticles = [
       Mulailah dari menyisihkan uang jajan mingguan, meskipun hanya Rp5.000.
       Gunakan rekening khusus tabungan agar tidak tergoda untuk membelanjakannya.
 
-      Bawa bekal, manfaatkan promo, dan batasi nongkrong berlebihan. 
+      Bawa bekal, manfaatkan promo, dan batasi nongkrong berlebihan.
       Uang kecil yang kamu sisihkan hari ini bisa menjadi dana liburan atau darurat di masa depan.
 
       Dengan konsistensi dan niat, kamu bisa punya tabungan meski penghasilan terbatas.
     `,
     category: 'saving',
     date: '2025-06-10'
+  },
+  {
+    id: 3,
+    title: 'Kenapa Budgeting Itu Penting?',
+    content: `
+      Budgeting membantumu mengetahui ke mana uang pergi. Tanpa anggaran, kamu bisa boros tanpa sadar.
+
+      Dengan budgeting, kamu bisa memisahkan pengeluaran wajib dan keinginan, serta menetapkan batas.
+
+      Ini adalah pondasi utama manajemen keuangan pribadi yang sehat.
+    `,
+    category: 'budgeting',
+    date: '2025-05-28'
+  },
+  {
+    id: 4,
+    title: 'Memahami Fixed vs Variable Expense',
+    content: `
+      Pengeluaran tetap (fixed) adalah biaya yang tidak berubah seperti sewa atau cicilan. Sementara pengeluaran variabel bisa berubah setiap bulan.
+
+      Memisahkan keduanya membantu kamu lebih mudah menyusun anggaran dan menghemat saat perlu.
+    `,
+    category: 'finance',
+    date: '2025-05-20'
+  },
+  {
+    id: 5,
+    title: '5 Langkah Membuat Dana Darurat',
+    content: `
+      Dana darurat penting untuk menghadapi hal tak terduga: sakit, kehilangan pekerjaan, atau biaya mendadak.
+
+      Sisihkan sedikit dari penghasilanmu setiap bulan hingga terkumpul 3-6 bulan pengeluaran tetap.
+    `,
+    category: 'saving',
+    date: '2025-05-15'
+  },
+  {
+    id: 6,
+    title: 'Cara Mencatat Pengeluaran Harian',
+    content: `
+      Catatan pengeluaran harian membuat kamu sadar akan kebiasaan kecil yang boros.
+
+      Gunakan aplikasi, spreadsheet, atau catatan manual, yang penting adalah konsisten mencatat.
+    `,
+    category: 'budgeting',
+    date: '2025-05-10'
+  },
+  {
+    id: 7,
+    title: 'Apa Itu Financial Goal?',
+    content: `
+      Financial goal adalah tujuan finansial yang ingin kamu capai, seperti membeli rumah, liburan, atau pensiun dini.
+
+      Dengan tujuan jelas, kamu jadi lebih termotivasi untuk menabung dan berinvestasi.
+    `,
+    category: 'finance',
+    date: '2025-05-05'
+  },
+  {
+    id: 8,
+    title: 'Tips Hidup Hemat di Kost',
+    content: `
+      Bawa bekal, masak sendiri, dan hindari pesan makanan online terus menerus. Gunakan air & listrik secukupnya.
+
+      Dengan trik ini, kamu bisa tetap hemat tanpa mengorbankan kenyamanan.
+    `,
+    category: 'saving',
+    date: '2025-04-28'
+  },
+  {
+    id: 9,
+    title: 'Menggunakan Amplop untuk Budget',
+    content: `
+      Metode amplop: alokasikan uang ke dalam "amplop" kategori, seperti makan, transportasi, hiburan.
+
+      Ini metode visual & disiplin untuk menghindari pengeluaran berlebihan.
+    `,
+    category: 'budgeting',
+    date: '2025-04-20'
+  },
+  {
+    id: 10,
+    title: 'Mengenal Aplikasi Keuangan Pribadi',
+    content: `
+      Aplikasi seperti M-Flow membantu kamu memantau pemasukan, pengeluaran, dan anggaran.
+
+      Pilih aplikasi yang simpel, ringan, dan bisa menyimpan data lokal seperti ini!
+    `,
+    category: 'finance',
+    date: '2025-04-15'
   }
 ]
 
@@ -49,13 +139,11 @@ onMounted(() => {
 
   if (!found) {
     alert('Artikel tidak ditemukan.')
-    router.push('/artikel')
+    router.push('/article')
   } else {
     article.value = found
   }
 })
-
-console.log("hello")
 </script>
 
 <template>
