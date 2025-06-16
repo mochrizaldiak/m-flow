@@ -18,6 +18,5 @@
 
 .main-content {
   flex: 1;
-  padding-bottom: 60px;
 }
 </style>

@@ -4,12 +4,14 @@ import ArticleCard from '~/components/ArticleCard.vue'
 
 definePageMeta({ layout: 'logged-in' })
 
+// State
 const searchQuery = ref('')
 const selectedCategory = ref('all')
 const selectedSort = ref('newest')
 const showBackTop = ref(false)
 const headerRef = ref(null)
 
+// Constants
 const categories = ['all', 'finance', 'saving', 'budgeting']
 const sortOptions = [
   { label: 'A → Z', value: 'az' },
@@ -18,6 +20,40 @@ const sortOptions = [
   { label: 'Terlama', value: 'oldest' }
 ]
 
+// Dummy data
+const dummyArticles = [
+  { id: 1, title: 'Cara Mengatur Uang dengan Mudah', content: 'Belajar dasar pengelolaan keuangan pribadi...', category: 'finance', date: '2025-06-16' },
+  { id: 2, title: 'Tips Menabung Buat Mahasiswa', content: 'Tips sederhana agar bisa konsisten menabung...', category: 'saving', date: '2025-06-10' },
+  { id: 3, title: 'Kenapa Budgeting Itu Penting?', content: 'Budgeting membantu kamu menghindari pemborosan...', category: 'budgeting', date: '2025-05-28' },
+  { id: 4, title: 'Memahami Fixed vs Variable Expense', content: 'Pahami jenis pengeluaran agar bisa kontrol cash flow...', category: 'finance', date: '2025-05-20' },
+  { id: 5, title: '5 Langkah Membuat Dana Darurat', content: 'Dana darurat wajib dimiliki...', category: 'saving', date: '2025-05-15' },
+  { id: 6, title: 'Cara Mencatat Pengeluaran Harian', content: 'Catat pengeluaran setiap hari untuk kontrol uang...', category: 'budgeting', date: '2025-05-10' },
+  { id: 7, title: 'Apa Itu Financial Goal?', content: 'Menetapkan tujuan finansial membantumu lebih fokus...', category: 'finance', date: '2025-05-05' },
+  { id: 8, title: 'Tips Hidup Hemat di Kost', content: 'Tips hidup hemat tapi tetap nyaman...', category: 'saving', date: '2025-04-28' },
+  { id: 9, title: 'Menggunakan Amplop untuk Budget', content: 'Metode amplop membatasi pengeluaran per kategori...', category: 'budgeting', date: '2025-04-20' },
+  { id: 10, title: 'Mengenal Aplikasi Keuangan Pribadi', content: 'Aplikasi seperti M-Flow bantu atur keuangan...', category: 'finance', date: '2025-04-15' }
+]
+
+// Filtered + sorted result
+const filteredArticles = computed(() => {
+  return dummyArticles
+    .filter(article => {
+      const matchCategory = selectedCategory.value === 'all' || article.category === selectedCategory.value
+      const matchSearch =
+        article.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        article.content.toLowerCase().includes(searchQuery.value.toLowerCase())
+      return matchCategory && matchSearch
+    })
+    .sort((a, b) => {
+      if (selectedSort.value === 'az') return a.title.localeCompare(b.title)
+      if (selectedSort.value === 'za') return b.title.localeCompare(a.title)
+      if (selectedSort.value === 'newest') return new Date(b.date) - new Date(a.date)
+      if (selectedSort.value === 'oldest') return new Date(a.date) - new Date(b.date)
+      return 0
+    })
+})
+
+// Actions
 const resetFilters = () => {
   searchQuery.value = ''
   selectedCategory.value = 'all'
@@ -28,99 +64,7 @@ const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-const dummyArticles = [
-  {
-    id: 1,
-    title: 'Cara Mengatur Uang dengan Mudah',
-    content: 'Belajar dasar pengelolaan keuangan pribadi...',
-    category: 'finance',
-    date: '2025-06-16'
-  },
-  {
-    id: 2,
-    title: 'Tips Menabung Buat Mahasiswa',
-    content: 'Tips sederhana agar bisa konsisten menabung meski uang pas-pasan...',
-    category: 'saving',
-    date: '2025-06-10'
-  },
-  {
-    id: 3,
-    title: 'Kenapa Budgeting Itu Penting?',
-    content: 'Budgeting membantu kamu menghindari pemborosan dan mencapai tujuan keuangan...',
-    category: 'budgeting',
-    date: '2025-05-28'
-  },
-  {
-    id: 4,
-    title: 'Memahami Fixed vs Variable Expense',
-    content: 'Pahami jenis pengeluaran agar bisa mengontrol cash flow dengan lebih baik...',
-    category: 'finance',
-    date: '2025-05-20'
-  },
-  {
-    id: 5,
-    title: '5 Langkah Membuat Dana Darurat',
-    content: 'Dana darurat wajib dimiliki untuk menghadapi hal tak terduga...',
-    category: 'saving',
-    date: '2025-05-15'
-  },
-  {
-    id: 6,
-    title: 'Cara Mencatat Pengeluaran Harian',
-    content: 'Catat pengeluaran setiap hari untuk kontrol penuh atas uangmu...',
-    category: 'budgeting',
-    date: '2025-05-10'
-  },
-  {
-    id: 7,
-    title: 'Apa Itu Financial Goal?',
-    content: 'Menetapkan tujuan finansial membantumu lebih fokus dan terarah...',
-    category: 'finance',
-    date: '2025-05-05'
-  },
-  {
-    id: 8,
-    title: 'Tips Hidup Hemat di Kost',
-    content: 'Buat kamu anak kos, ini dia tips hidup hemat tapi tetap nyaman...',
-    category: 'saving',
-    date: '2025-04-28'
-  },
-  {
-    id: 9,
-    title: 'Menggunakan Amplop untuk Budget',
-    content: 'Metode amplop bisa membantumu membatasi pengeluaran per kategori...',
-    category: 'budgeting',
-    date: '2025-04-20'
-  },
-  {
-    id: 10,
-    title: 'Mengenal Aplikasi Keuangan Pribadi',
-    content: 'Aplikasi seperti M-Flow bisa bantu atur keuangan kamu lebih praktis...',
-    category: 'finance',
-    date: '2025-04-15'
-  }
-]
-
-const filteredArticles = computed(() => {
-  let result = dummyArticles.filter((article) => {
-    const matchCategory =
-      selectedCategory.value === 'all' || article.category === selectedCategory.value
-    const matchSearch =
-      article.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      article.content.toLowerCase().includes(searchQuery.value.toLowerCase())
-    return matchCategory && matchSearch
-  })
-
-  return result.sort((a, b) => {
-    if (selectedSort.value === 'az') return a.title.localeCompare(b.title)
-    if (selectedSort.value === 'za') return b.title.localeCompare(a.title)
-    if (selectedSort.value === 'newest') return new Date(b.date) - new Date(a.date)
-    if (selectedSort.value === 'oldest') return new Date(a.date) - new Date(b.date)
-    return 0
-  })
-})
-
-// Observer for showing back-to-top button
+// Observer
 let observer
 onMounted(() => {
   observer = new IntersectionObserver(([entry]) => {

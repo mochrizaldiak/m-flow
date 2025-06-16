@@ -31,12 +31,12 @@ const chartData = computed(() => {
     labels: ['Minggu 1', 'Minggu 2', 'Minggu 3', 'Minggu 4'],
     datasets: [
       {
-        label: 'Income',
+        label: 'Pemasukan',
         data: generateRandomData(4, 500, 1000),
         backgroundColor: '#60a5fa'
       },
       {
-        label: 'Expense',
+        label: 'Pengeluaran',
         data: generateRandomData(4, 400, 900),
         backgroundColor: '#f87171'
       }

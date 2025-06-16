@@ -6,13 +6,24 @@ import BarChart from '~/components/BarChart.vue'
 definePageMeta({ layout: 'logged-in' })
 
 const router = useRouter()
-const month = ref(new Date().getMonth())
-const year = ref(new Date().getFullYear())
+
+const now = new Date()
+const currentMonth = now.getMonth()
+const currentYear = now.getFullYear()
+
+const month = ref(currentMonth)
+const year = ref(currentYear)
+
 const months = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
 ]
-const years = [2023, 2024, 2025]
+
+const years = Array.from({ length: currentYear - 2020 + 1 }, (_, i) => 2020 + i)
+
+const availableMonths = computed(() => {
+  return year.value === currentYear ? months.slice(0, currentMonth + 1) : months
+})
 
 // Dummy Transactions
 const transactions = [
@@ -65,24 +76,26 @@ const toAddBudget = () => {
 }
 </script>
 
+
 <template>
   <div class="page-wrapper">
     <!-- Balance -->
     <div class="card">
-      <div class="label">Balance</div>
+      <div class="label">Saldo</div>
       <div class="value">IDR {{ balance.toLocaleString('id-ID') }}</div>
     </div>
 
-    <!-- Anggaran Section -->
+    <!-- Daftar Anggaran -->
     <div class="card">
       <div class="section-header">
         <div class="label">Daftar Anggaran</div>
       </div>
-      <div v-if="activeBudgets.length === 0" class="empty-state">
-        Belum ada anggaran bulan ini.
-      </div>
-      <div v-else>
-        <div v-for="b in activeBudgets" :key="b.id" class="budget-item">
+      <template v-if="activeBudgets.length > 0">
+        <div
+          v-for="b in activeBudgets"
+          :key="b.id"
+          class="budget-item"
+        >
           <div class="budget-title">{{ b.name }}</div>
           <div class="budget-meta">
             <span>{{ b.start }} – {{ b.end }}</span>
@@ -96,33 +109,25 @@ const toAddBudget = () => {
             Lihat semua anggaran →
           </button>
         </div>
-      </div>
-    </div>
-    
-    <!-- Warning -->
-    <div class="warning-box" v-if="activeBudgets.some(b => b.expense > b.income)">
-      ⚠️ Beberapa anggaran kamu melebihi batas!
+      </template>
+      <div v-else class="empty-state">Belum ada anggaran bulan ini.</div>
     </div>
 
-    <!-- Recent Transactions -->
-    <div class="card">
-      <div class="label">Transaksi Terbaru</div>
-      <div v-for="t in recentTransactions" :key="t.id" class="trans-item">
-        <div class="trans-info">
-          <span :class="t.type">{{ t.type === 'income' ? '+' : '-' }} Rp{{ t.amount.toLocaleString('id-ID') }}</span>
-          <span>{{ t.category }}</span>
-        </div>
-        <div class="trans-date">{{ t.date }}</div>
-      </div>
+    <!-- Warning Anggaran -->
+    <div
+      class="warning-box"
+      v-if="activeBudgets.some(b => b.expense > b.income)"
+    >
+      ⚠️ Beberapa anggaran kamu melebihi batas!
     </div>
 
     <!-- Chart -->
     <div class="card">
       <div class="chart-header">
-        <div class="label">Income vs Expenses</div>
+        <div class="label">Pemasukan vs Pengeluaran</div>
         <div class="filter-group">
           <select v-model="month">
-            <option v-for="(m, i) in months" :key="i" :value="i">{{ m }}</option>
+            <option v-for="(m, i) in availableMonths" :key="i" :value="i">{{ m }}</option>
           </select>
           <select v-model="year">
             <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
@@ -132,12 +137,31 @@ const toAddBudget = () => {
       <BarChart :month="month" :year="year" />
     </div>
 
-    <!-- Article -->
+    <!-- Transaksi Terbaru -->
+    <div class="card">
+      <div class="label">Transaksi Terbaru</div>
+      <template v-if="recentTransactions.length > 0">
+        <div
+          v-for="t in recentTransactions"
+          :key="t.id"
+          class="trans-item"
+        >
+          <div class="trans-info">
+            <span :class="t.type">
+              {{ t.type === 'income' ? '+' : '-' }} Rp{{ t.amount.toLocaleString('id-ID') }}
+            </span>
+            <span>{{ t.category }}</span>
+          </div>
+          <div class="trans-date">{{ t.date }}</div>
+        </div>
+      </template>
+      <div v-else class="empty-state">Belum ada transaksi bulan ini.</div>
+    </div>
+
+    <!-- Artikel -->
     <div>
       <div class="label">Rekomendasi Artikel</div>
-      <NuxtLink
-        to="/article/1"
-      >
+      <NuxtLink to="/article/1">
         <ArticleCard
           :title="article.title"
           :content="article.content"

@@ -1,10 +1,10 @@
 <template>
   <div class="auth-wrapper">
     <div class="auth-card">
-      <h1 class="title">Masuk ke M-Flow</h1>
-      <p class="subtitle">Gunakan email dan password untuk login.</p>
+      <h1 class="title">Daftar Akun</h1>
+      <p class="subtitle">Silakan isi data untuk membuat akun baru.</p>
 
-      <form @submit.prevent="handleLogin">
+      <form @submit.prevent="handleRegister">
         <div class="form-group">
           <label>Email</label>
           <input
@@ -23,22 +23,39 @@
               v-model="password"
               :type="showPassword ? 'text' : 'password'"
               class="input"
-              placeholder="••••••••"
+              placeholder="Buat password..."
               required
             />
-            <button type="button" class="eye-btn" @click="togglePassword">
+            <button type="button" class="eye-btn" @click="showPassword = !showPassword">
               <LucideEye v-if="!showPassword" size="18" />
               <LucideEyeOff v-else size="18" />
             </button>
           </div>
         </div>
 
-        <button class="login-btn" type="submit">Login</button>
+        <div class="form-group">
+          <label>Konfirmasi Password</label>
+          <div class="password-wrapper">
+            <input
+              v-model="confirmPassword"
+              :type="showConfirm ? 'text' : 'password'"
+              class="input"
+              placeholder="Ulangi password..."
+              required
+            />
+            <button type="button" class="eye-btn" @click="showConfirm = !showConfirm">
+              <LucideEye v-if="!showConfirm" size="18" />
+              <LucideEyeOff v-else size="18" />
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="register-btn">Daftar</button>
       </form>
 
-      <p class="register-text">
-        Belum punya akun?
-        <span class="register-link" @click="router.push('/register')">Daftar di sini</span>
+      <p class="login-text">
+        Sudah punya akun?
+        <span class="login-link" @click="router.push('/login')">Masuk di sini</span>
       </p>
     </div>
   </div>
@@ -52,30 +69,33 @@ import { Eye as LucideEye, EyeOff as LucideEyeOff } from 'lucide-vue-next'
 const router = useRouter()
 const email = ref('')
 const password = ref('')
+const confirmPassword = ref('')
 const showPassword = ref(false)
+const showConfirm = ref(false)
 
-const togglePassword = () => {
-  showPassword.value = !showPassword.value
-}
+// Dummy user list simpan di memori (tanpa persist)
+const dummyUsers = ref([])
 
-// Dummy user list
-const dummyUsers = [
-  { email: 'user@example.com', password: 'password123' },
-  { email: 'admin@example.com', password: 'admin123' }
-]
-
-const handleLogin = () => {
-  const found = dummyUsers.find(
-    u => u.email === email.value && u.password === password.value
-  )
-
-  if (!found) {
-    alert('Email atau password salah.')
+const handleRegister = () => {
+  if (!email.value || !password.value || !confirmPassword.value) {
+    alert('Harap lengkapi semua field.')
     return
   }
 
-  alert('✅ Login berhasil!')
-  router.push('/')
+  if (password.value !== confirmPassword.value) {
+    alert('Konfirmasi password tidak cocok.')
+    return
+  }
+
+  const alreadyExists = dummyUsers.value.find(u => u.email === email.value)
+  if (alreadyExists) {
+    alert('Email sudah terdaftar.')
+    return
+  }
+
+  dummyUsers.value.push({ email: email.value, password: password.value })
+  alert('✅ Pendaftaran berhasil! Silakan login.')
+  router.push('/login')
 }
 </script>
 
@@ -128,11 +148,11 @@ const handleLogin = () => {
 }
 
 .input {
-  width: 100%;
   padding: 10px;
   font-size: 14px;
   border: 1px solid #ccc;
   border-radius: 8px;
+  width: 100%;
 }
 
 .password-wrapper {
@@ -152,7 +172,7 @@ const handleLogin = () => {
   padding: 4px;
 }
 
-.login-btn {
+.register-btn {
   width: 100%;
   padding: 12px;
   font-size: 15px;
@@ -167,19 +187,19 @@ const handleLogin = () => {
   margin-top: 8px;
 }
 
-.login-btn:hover {
+.register-btn:hover {
   background-color: #3c6fed;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(74, 126, 252, 0.3);
 }
 
-.register-text {
+.login-text {
   font-size: 13px;
   color: #5d5d5d;
   margin-top: 16px;
 }
 
-.register-link {
+.login-link {
   color: #2c7be5;
   font-weight: 600;
   cursor: pointer;
