@@ -17,6 +17,11 @@
 }
 
 .main-content {
-  flex: 1;
+  min-height: 100vh;
+  background: linear-gradient(to bottom right, #6c92f4, #b4c5f8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
 }
 </style>

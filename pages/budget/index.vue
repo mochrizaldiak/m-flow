@@ -1,40 +1,43 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import BudgetCard from '~/components/BudgetCard.vue'
 
-definePageMeta({ layout: 'logged-in' })
+definePageMeta({ layout: 'logged-in', middleware: 'auth' })
 
 const router = useRouter()
-
 const search = ref('')
 const filter = ref('all')
-const budgets = ref([
-  {
-    id: 1,
-    name: 'Kos Bulanan',
-    type: 'primary',
-    income: 2000000,
-    expense: 1500000,
-    start: '2025-06-01',
-    end: '2025-06-30',
-    description: 'Biaya tempat tinggal bulan Juni'
-  },
-  {
-    id: 2,
-    name: 'Hiburan',
-    type: 'non-primary',
-    income: 1000000,
-    expense: 1200000,
-    start: '2025-06-10',
-    end: '2025-06-20',
-    description: 'Langganan streaming dan bioskop'
+const budgets = ref([])
+const loading = ref(true)
+const error = ref(false)
+
+const fetchBudgets = async () => {
+  try {
+    loading.value = true
+    const token = localStorage.getItem('token')
+
+    const res = await $fetch('http://localhost:8080/budgets/', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+
+    budgets.value = res.data || res || []
+  } catch (err) {
+    console.error('Gagal mengambil data anggaran:', err)
+    error.value = true
+  } finally {
+    loading.value = false
   }
-])
+}
+
+onMounted(fetchBudgets)
 
 const filteredBudgets = computed(() => {
   return budgets.value.filter(b => {
-    const matchesSearch = b.name.toLowerCase().includes(search.value.toLowerCase())
-    const matchesFilter = filter.value === 'all' || b.type === filter.value
+    const matchesSearch = b.deskripsi?.toLowerCase().includes(search.value.toLowerCase())
+    const matchesFilter = filter.value === 'all' || b.jenis_anggaran === filter.value
     return matchesSearch && matchesFilter
   })
 })
@@ -55,12 +58,14 @@ const toAddBudget = () => {
       <input v-model="search" type="text" class="input" placeholder="Cari nama anggaran..." />
       <select v-model="filter" class="input">
         <option value="all">Semua</option>
-        <option value="primary">Primer</option>
-        <option value="non-primary">Non-primer</option>
+        <option value="primer">Primer</option>
+        <option value="non-primer">Non-primer</option>
       </select>
     </div>
 
-    <div v-if="filteredBudgets.length === 0" class="empty-state">
+    <div v-if="loading" class="empty-state">Memuat data anggaran...</div>
+    <div v-else-if="error" class="empty-state">Gagal memuat data.</div>
+    <div v-else-if="filteredBudgets.length === 0" class="empty-state">
       Tidak ada anggaran ditemukan.
     </div>
 
@@ -69,12 +74,12 @@ const toAddBudget = () => {
         v-for="b in filteredBudgets"
         :key="b.id"
         :id="b.id"
-        :name="b.name"
-        :type="b.type"
-        :income="b.income"
-        :expense="b.expense"
-        :start="b.start"
-        :end="b.end"
+        :name="b.nama"
+        :type="b.jenis_anggaran"
+        :income="b.pemasukan"
+        :expense="b.pengeluaran"
+        :start="new Date(b.tanggal).toISOString().split('T')[0]"
+        :end="new Date(b.tanggal).toISOString().split('T')[0]"
       />
     </div>
   </div>

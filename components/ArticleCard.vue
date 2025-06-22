@@ -4,12 +4,11 @@ import { marked } from 'marked'
 
 const props = defineProps({
   title: String,
-  content: String, // masih markdown
+  content: String,
   category: String,
   date: String
 })
 
-// Convert markdown ke HTML lalu truncate hasil teksnya
 const truncatedContent = computed(() => {
   if (!props.content) return ''
   const rawHTML = marked.parse(props.content)

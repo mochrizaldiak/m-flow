@@ -54,6 +54,11 @@ const password = ref('')
 const showPassword = ref(false)
 const router = useRouter()
 
+definePageMeta({
+  layout: 'guest',
+  middleware: 'auth'
+})
+
 const togglePassword = () => {
   showPassword.value = !showPassword.value
 }

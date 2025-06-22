@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-definePageMeta({ layout: 'logged-in' })
+definePageMeta({ layout: 'logged-in', middleware: 'auth' })
 
 const route = useRoute()
 const router = useRouter()
@@ -29,7 +29,7 @@ const loadTransaction = async () => {
         year: 'numeric', month: 'long', day: 'numeric'
       }),
       note: res.catatan || '-',
-      budgetName: res.budget?.deskripsi || '-'
+      budgetName: res.budget?.nama || '-'
     }
   } catch (err) {
     console.error('Gagal mengambil transaksi:', err)

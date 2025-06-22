@@ -7,7 +7,7 @@ const router = useRouter()
 const props = defineProps({
   id: [Number, String],
   name: String,
-  type: String, // 'primary' | 'non-primary'
+  type: String,
   income: Number,
   expense: Number,
   start: String,
@@ -23,7 +23,7 @@ const goToDetail = () => {
   <div class="budget-card" @click="goToDetail">
     <div class="card-header">
       <h3 class="budget-name">{{ name }}</h3>
-      <span class="badge" :class="type">{{ type === 'primary' ? 'Primer' : 'Non-primer' }}</span>
+      <span class="badge" :class="type">{{ type === 'primer' ? 'Primer' : 'Non-primer' }}</span>
     </div>
     <div class="budget-info">
       <p>💰 Income: Rp {{ income.toLocaleString('id-ID') }}</p>

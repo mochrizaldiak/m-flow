@@ -8,7 +8,6 @@ import {
 } from 'lucide-vue-next'
 
 const route = useRoute()
-console.log(route)
 </script>
 
 <template>

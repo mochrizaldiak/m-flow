@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import TransactionCard from '~/components/TransactionCard.vue'
 
-definePageMeta({ layout: 'logged-in' })
+definePageMeta({ layout: 'logged-in', middleware: 'auth' })
 
 const router = useRouter()
 const transaksiList = ref([])
@@ -31,7 +31,7 @@ const loadTransaksi = async () => {
       date: new Date(item.tanggal).toLocaleDateString('id-ID', {
         year: 'numeric', month: 'long', day: 'numeric'
       }),
-      budgetName: item.budget.deskripsi || '-'
+      budgetName: item.budget.nama || '-'
     }))
   } catch (err) {
     console.error('Gagal fetch transaksi:', err)

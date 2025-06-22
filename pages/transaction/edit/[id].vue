@@ -2,12 +2,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-definePageMeta({ layout: 'logged-in' })
+definePageMeta({ layout: 'logged-in', middleware: 'auth' })
 
 const route = useRoute()
 const router = useRouter()
 
-// Form fields
 const id = ref(null)
 const amount = ref('')
 const type = ref('expense')
@@ -19,12 +18,10 @@ const budgets = ref([])
 const loading = ref(true)
 const saving = ref(false)
 
-// Validasi
 const isValid = computed(() =>
   amount.value && category.value && date.value && budgetId.value
 )
 
-// Load list anggaran
 const loadBudgets = async () => {
   const token = localStorage.getItem('token')
   const res = await $fetch('http://localhost:8080/budgets/', {
@@ -33,7 +30,6 @@ const loadBudgets = async () => {
   budgets.value = res?.data || res
 }
 
-// Load data transaksi
 const loadTransaction = async () => {
   try {
     const token = localStorage.getItem('token')
@@ -56,7 +52,6 @@ const loadTransaction = async () => {
   }
 }
 
-// Simpan perubahan
 const updateTransaction = async () => {
   try {
     saving.value = true
@@ -122,7 +117,7 @@ onMounted(async () => {
       <select v-model="budgetId" class="input">
         <option disabled value="">-- Pilih Anggaran --</option>
         <option v-for="b in budgets" :key="b.id" :value="b.id">
-          {{ b.deskripsi }}
+          {{ b.nama }}
         </option>
       </select>
     </div>

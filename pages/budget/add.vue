@@ -2,33 +2,49 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
-definePageMeta({ layout: 'logged-in' })
+definePageMeta({ layout: 'logged-in', middleware: 'auth' })
 
 const router = useRouter()
 
 const name = ref('')
-const type = ref('primary')
+const type = ref('primer')
 const start = ref('')
 const end = ref('')
 const description = ref('')
+const loading = ref(false)
 
 const isValid = computed(() =>
   name.value && start.value && end.value
 )
 
-const saveBudget = () => {
-  const payload = {
-    name: name.value,
-    type: type.value,
-    start: start.value,
-    end: end.value,
-    description: description.value,
-    createdAt: new Date().toISOString()
-  }
+const saveBudget = async () => {
+  try {
+    loading.value = true
+    const token = localStorage.getItem('token')
+    const payload = {
+      nama: name.value,
+      jenis_anggaran: type.value,
+      tanggal_mulai: start.value,
+      tanggal_selesai: end.value,
+      deskripsi: description.value
+    }
 
-  console.log('📦 Anggaran baru:', payload)
-  alert('✅ Anggaran berhasil disiapkan!')
-  router.push('/budget')
+    await $fetch('http://localhost:8080/budgets/', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body: payload
+    })
+
+    alert('✅ Anggaran berhasil ditambahkan!')
+    router.push('/budget')
+  } catch (err) {
+    console.error('Gagal menambahkan anggaran:', err)
+    alert('❌ Gagal menambahkan anggaran.')
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -44,8 +60,8 @@ const saveBudget = () => {
     <div class="form-group">
       <label>Jenis Anggaran</label>
       <div class="radio-group">
-        <label><input type="radio" value="primary" v-model="type" /> Primer</label>
-        <label><input type="radio" value="non-primary" v-model="type" /> Non-primer</label>
+        <label><input type="radio" value="primer" v-model="type" /> Primer</label>
+        <label><input type="radio" value="non-primer" v-model="type" /> Non-primer</label>
       </div>
     </div>
 
@@ -64,8 +80,12 @@ const saveBudget = () => {
       <textarea v-model="description" class="input" rows="3" />
     </div>
 
-    <button class="btn full-width" :disabled="!isValid" @click="saveBudget">
-      SIMPAN
+    <button
+      class="btn full-width"
+      :disabled="!isValid || loading"
+      @click="saveBudget"
+    >
+      {{ loading ? 'Menyimpan...' : 'SIMPAN' }}
     </button>
   </div>
 </template>

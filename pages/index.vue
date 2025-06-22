@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import BarChart from '~/components/BarChart.vue'
+import ArticleCard from '~/components/ArticleCard.vue'
 
-definePageMeta({ layout: 'logged-in' })
+definePageMeta({ layout: 'logged-in', middleware: 'auth' })
 
 const router = useRouter()
 
@@ -25,7 +26,37 @@ const availableMonths = computed(() => {
   return year.value === currentYear ? months.slice(0, currentMonth + 1) : months
 })
 
-// Dummy Transactions
+const balance = ref(0)
+const fetchSaldo = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    const res = await $fetch('http://localhost:8080/users/me', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    balance.value = res.saldo || 0
+  } catch (err) {
+    console.error('Gagal mengambil saldo:', err)
+    balance.value = 0
+  }
+}
+
+const recommendedArticle = ref(null)
+const fetchArticle = async () => {
+  try {
+    const res = await $fetch('http://localhost:8080/articles/', {
+      method: 'GET',
+      params: { page: 1, limit: 1 }
+    })
+    const data = res?.data || res || []
+    recommendedArticle.value = data.length > 0 ? data[0] : null
+  } catch (err) {
+    console.error('Gagal mengambil artikel:', err)
+    recommendedArticle.value = null
+  }
+}
+
 const transactions = [
   { id: 1, type: 'income', amount: 3000000, category: 'Gaji', note: '', date: '2025-06-01' },
   { id: 2, type: 'expense', amount: 50000, category: 'Makan', note: '', date: '2025-06-02' },
@@ -34,27 +65,10 @@ const transactions = [
   { id: 5, type: 'income', amount: 250000, category: 'Freelance', note: '', date: '2025-06-06' },
 ]
 
-// Dummy Budgets
 const budgets = [
   { id: 1, name: 'Kos Bulanan', type: 'primary', income: 2000000, expense: 1800000, start: '2025-06-01', end: '2025-06-30' },
   { id: 2, name: 'Hiburan', type: 'non-primary', income: 500000, expense: 600000, start: '2025-06-10', end: '2025-06-20' }
 ]
-
-// Dummy Article
-const article = {
-  title: 'Cara Mengatur Uang di Akhir Bulan',
-  content: 'Tips cerdas agar uang kamu tidak habis di tanggal tua.',
-  date: '2025-06-15',
-  category: 'finance'
-}
-
-const balance = computed(() => {
-  const current = transactions.filter(t => {
-    const d = new Date(t.date)
-    return d.getMonth() === month.value && d.getFullYear() === year.value
-  })
-  return current.reduce((total, t) => t.type === 'income' ? total + t.amount : total - t.amount, 0)
-})
 
 const recentTransactions = computed(() => {
   return transactions
@@ -74,18 +88,20 @@ const activeBudgets = computed(() => {
 const toAddBudget = () => {
   router.push('/budget/add')
 }
-</script>
 
+onMounted(() => {
+  fetchSaldo()
+  fetchArticle()
+})
+</script>
 
 <template>
   <div class="page-wrapper">
-    <!-- Balance -->
     <div class="card">
       <div class="label">Saldo</div>
       <div class="value">IDR {{ balance.toLocaleString('id-ID') }}</div>
     </div>
 
-    <!-- Daftar Anggaran -->
     <div class="card">
       <div class="section-header">
         <div class="label">Daftar Anggaran</div>
@@ -113,16 +129,12 @@ const toAddBudget = () => {
       <div v-else class="empty-state">Belum ada anggaran bulan ini.</div>
     </div>
 
-    <!-- Warning Anggaran -->
-    <div
-      class="warning-box"
-      v-if="activeBudgets.some(b => b.expense > b.income)"
-    >
+    <div class="warning-box" v-if="activeBudgets.some(b => b.expense > b.income)">
       ⚠️ Beberapa anggaran kamu melebihi batas!
     </div>
 
     <!-- Chart -->
-    <div class="card">
+    <!-- <div class="card">
       <div class="chart-header">
         <div class="label">Pemasukan vs Pengeluaran</div>
         <div class="filter-group">
@@ -135,10 +147,10 @@ const toAddBudget = () => {
         </div>
       </div>
       <BarChart :month="month" :year="year" />
-    </div>
+    </div> -->
 
     <!-- Transaksi Terbaru -->
-    <div class="card">
+    <!-- <div class="card">
       <div class="label">Transaksi Terbaru</div>
       <template v-if="recentTransactions.length > 0">
         <div
@@ -156,19 +168,21 @@ const toAddBudget = () => {
         </div>
       </template>
       <div v-else class="empty-state">Belum ada transaksi bulan ini.</div>
-    </div>
+    </div> -->
 
-    <!-- Artikel -->
     <div>
       <div class="label">Rekomendasi Artikel</div>
-      <NuxtLink to="/article/1">
-        <ArticleCard
-          :title="article.title"
-          :content="article.content"
-          :category="article.category"
-          :date="article.date"
-        />
-      </NuxtLink>
+      <template v-if="recommendedArticle">
+        <NuxtLink :to="`/article/${recommendedArticle.id}`">
+          <ArticleCard
+            :title="recommendedArticle.judul"
+            :content="recommendedArticle.konten"
+            :category="recommendedArticle.kategori"
+            :date="recommendedArticle.tanggal"
+          />
+        </NuxtLink>
+      </template>
+      <div v-else class="empty-state">Tidak ada artikel tersedia.</div>
     </div>
   </div>
 </template>

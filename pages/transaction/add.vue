@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
-definePageMeta({ layout: 'logged-in' })
+definePageMeta({ layout: 'logged-in', middleware: 'auth' })
 
 const router = useRouter()
 
@@ -116,7 +116,7 @@ onMounted(fetchBudgets)
           :key="b.id"
           :value="b.id"
         >
-          {{ b.deskripsi }}
+          {{ b.nama }}
         </option>
       </select>
     </div>

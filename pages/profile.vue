@@ -1,9 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { openDB } from 'idb'
 
-definePageMeta({ layout: 'logged-in' })
+definePageMeta({ layout: 'logged-in', middleware: 'auth' })
 
 const router = useRouter()
 const nama = ref('User M-Flow')
@@ -23,24 +22,21 @@ const getRekomendasi = (val) => {
   return 'Perlu evaluasi besar terhadap keuanganmu.'
 }
 
-onMounted(async () => {
-  const db = await openDB('mflow-db', 1)
-  const session = await db.get('auth', 'session')
-  if (session) {
-    nama.value = 'Pengguna M-Flow'
-  }
-
+onMounted(() => {
+  nama.value = 'Pengguna M-Flow'
   status.value = getStatus(skor.value)
   rekomendasi.value = getRekomendasi(skor.value)
 })
 
-const logout = async () => {
-  const db = await openDB('mflow-db', 1)
-  await db.delete('auth', 'session')
-  alert('👋 Kamu telah keluar.')
-  router.push('/login')
+const logout = () => {
+  if (confirm('Apakah kamu yakin ingin keluar?')) {
+    localStorage.removeItem('token')
+    alert('👋 Kamu telah keluar.')
+    router.push('/login')
+  }
 }
 </script>
+
 
 <template>
   <div class="profile-wrapper">

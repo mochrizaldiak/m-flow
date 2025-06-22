@@ -73,6 +73,11 @@ const confirmPassword = ref('')
 const showPassword = ref(false)
 const showConfirm = ref(false)
 
+definePageMeta({
+  layout: 'guest',
+  middleware: 'auth'
+})
+
 const handleRegister = async () => {
   if (!email.value || !password.value || !confirmPassword.value) {
     alert('Harap lengkapi semua field.')

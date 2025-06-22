@@ -1,14 +1,14 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { marked } from 'marked' // pakai marked
+import { marked } from 'marked' 
 
-definePageMeta({ layout: 'logged-in' })
+definePageMeta({ layout: 'logged-in', middleware: 'auth' })
 
 const route = useRoute()
 const router = useRouter()
 const article = ref(null)
-const renderedContent = ref('') // hasil markdown → html
+const renderedContent = ref('') 
 
 onMounted(async () => {
   const id = route.params.id
@@ -17,7 +17,7 @@ onMounted(async () => {
     if (!res) throw new Error('Artikel tidak ditemukan.')
 
     article.value = res
-    renderedContent.value = marked.parse(res.konten || '') // ✅ convert markdown ke HTML
+    renderedContent.value = marked.parse(res.konten || '') 
   } catch (err) {
     console.error(err)
     router.push('/article')
@@ -37,7 +37,6 @@ onMounted(async () => {
         }) }}
       </span>
     </div>
-    <!-- ✅ Render markdown sebagai HTML -->
     <div class="article-content" v-html="renderedContent" />
   </div>
 </template>

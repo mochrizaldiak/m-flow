@@ -3,9 +3,8 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useDebounceFn } from '@vueuse/core'
 import ArticleCard from '~/components/ArticleCard.vue'
 
-definePageMeta({ layout: 'logged-in' })
+definePageMeta({ layout: 'logged-in', middleware: 'auth' })
 
-// State
 const searchQuery = ref('')
 const selectedCategory = ref('all')
 const selectedSort = ref('tanggal_desc')
@@ -15,7 +14,6 @@ const articles = ref([])
 const loading = ref(false)
 const empty = ref(false)
 
-// Constants
 const categories = ['all', 'finance', 'saving', 'budgeting']
 const sortOptions = [
   { label: 'A → Z', value: 'judul_asc' },
@@ -24,7 +22,6 @@ const sortOptions = [
   { label: 'Terlama', value: 'tanggal_asc' }
 ]
 
-// Fetch from API
 const fetchArticles = async () => {
   try {
     loading.value = true
@@ -56,7 +53,6 @@ const fetchArticles = async () => {
   }
 }
 
-// Debounce pencarian
 const debouncedSearch = useDebounceFn(() => {
   fetchArticles()
 }, 500)
@@ -65,12 +61,10 @@ watch(searchQuery, () => {
   debouncedSearch()
 })
 
-// Watch kategori dan sort langsung trigger fetch
 watch([selectedCategory, selectedSort], () => {
   fetchArticles()
 })
 
-// Reset filter
 const resetFilters = () => {
   searchQuery.value = ''
   selectedCategory.value = 'all'
@@ -78,12 +72,10 @@ const resetFilters = () => {
   fetchArticles()
 }
 
-// Scroll
 const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-// Observer
 let observer
 onMounted(() => {
   fetchArticles()

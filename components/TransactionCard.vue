@@ -3,7 +3,7 @@ import { defineProps } from 'vue'
 
 const props = defineProps({
   id: [String, Number],
-  type: String, // 'income' | 'expense'
+  type: String, 
   amount: Number,
   category: String,
   date: String,

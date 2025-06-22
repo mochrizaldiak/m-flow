@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
-definePageMeta({ layout: 'logged-in' })
+definePageMeta({ layout: 'logged-in', middleware: 'auth' })
 
 const route = useRoute()
 const router = useRouter()
@@ -13,67 +13,69 @@ const type = ref('primary')
 const start = ref('')
 const end = ref('')
 const description = ref('')
+const loading = ref(true)
 
 const isValid = computed(() =>
   name.value && start.value && end.value
 )
 
-const dummyBudgets = [
-  {
-    id: 1,
-    name: 'Kos Bulanan',
-    type: 'primary',
-    start: '2025-06-01',
-    end: '2025-06-30',
-    description: 'Biaya tempat tinggal bulan Juni'
-  },
-  {
-    id: 2,
-    name: 'Hiburan',
-    type: 'non-primary',
-    start: '2025-06-10',
-    end: '2025-06-20',
-    description: 'Langganan streaming dan bioskop'
-  }
-]
+const loadBudget = async () => {
+  try {
+    loading.value = true
+    const token = localStorage.getItem('token')
+    const res = await $fetch(`http://localhost:8080/budgets/${route.params.id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
 
-const loadBudget = () => {
-  const target = dummyBudgets.find(b => b.id === Number(route.params.id))
-  if (!target) {
-    alert('Anggaran tidak ditemukan.')
+    id.value = res.id
+    name.value = res.nama
+    type.value = res.jenis_anggaran === 'primer' ? 'primary' : 'non-primary'
+    start.value = res.tanggal?.split('T')[0] || ''
+    end.value = res.tanggal_akhir?.split('T')[0] || ''
+    description.value = res.deskripsi || ''
+  } catch (err) {
+    console.error('Gagal mengambil anggaran:', err)
+    alert('Gagal mengambil data anggaran.')
     router.push('/budget')
-    return
+  } finally {
+    loading.value = false
   }
-
-  id.value = target.id
-  name.value = target.name
-  type.value = target.type
-  start.value = target.start
-  end.value = target.end
-  description.value = target.description || ''
 }
 
-const updateBudget = () => {
-  const payload = {
-    id: id.value,
-    name: name.value,
-    type: type.value,
-    start: start.value,
-    end: end.value,
-    description: description.value,
-    updatedAt: new Date().toISOString()
-  }
+const updateBudget = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    const payload = {
+      nama: name.value,
+      jenis_anggaran: type.value === 'primary' ? 'primer' : 'non-primer',
+      tanggal: start.value,
+      tanggal_akhir: end.value,
+      deskripsi: description.value
+    }
 
-  console.log('📦 Data update anggaran:', payload)
-  alert('✅ Perubahan anggaran berhasil disimpan (dummy).')
-  router.push(`/budget/${id.value}`)
+    await $fetch(`http://localhost:8080/budgets/${id.value}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body: payload
+    })
+
+    alert('✅ Anggaran berhasil diperbarui.')
+    router.push(`/budget/${id.value}`)
+  } catch (err) {
+    console.error('Gagal update:', err)
+    alert('Gagal memperbarui anggaran.')
+  }
 }
 
 onMounted(loadBudget)
 </script>
 
 <template>
-  <div class="page-wrapper">
+  <div class="page-wrapper" v-if="!loading">
     <h2 class="page-title">Edit Anggaran</h2>
 
     <div class="form-group">
@@ -108,6 +110,8 @@ onMounted(loadBudget)
       SIMPAN PERUBAHAN
     </button>
   </div>
+
+  <div v-else class="loading">Memuat data anggaran...</div>
 </template>
 
 <style scoped>
@@ -163,5 +167,12 @@ onMounted(loadBudget)
 
 .full-width {
   width: 100%;
+}
+
+.loading {
+  text-align: center;
+  padding: 48px 0;
+  color: #888;
+  font-size: 14px;
 }
 </style>
