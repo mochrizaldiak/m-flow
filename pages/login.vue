@@ -49,35 +49,37 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Eye as LucideEye, EyeOff as LucideEyeOff } from 'lucide-vue-next'
 
-const router = useRouter()
 const email = ref('')
 const password = ref('')
 const showPassword = ref(false)
+const router = useRouter()
 
 const togglePassword = () => {
   showPassword.value = !showPassword.value
 }
 
-// Dummy user list
-const dummyUsers = [
-  { email: 'user@example.com', password: 'password123' },
-  { email: 'admin@example.com', password: 'admin123' }
-]
+const handleLogin = async () => {
+  try {
+    const res = await $fetch('http://localhost:8080/users/login', {
+      method: 'POST',
+      body: {
+        email: email.value,
+        password: password.value
+      }
+    })
 
-const handleLogin = () => {
-  const found = dummyUsers.find(
-    u => u.email === email.value && u.password === password.value
-  )
+    alert('✅ Login berhasil!')
 
-  if (!found) {
-    alert('Email atau password salah.')
-    return
+    localStorage.setItem('token', res.token)
+
+    router.push('/')
+  } catch (err) {
+    const message = err?.data?.message || '❌ Terjadi kesalahan saat login.'
+    alert(message)
   }
-
-  alert('✅ Login berhasil!')
-  router.push('/')
 }
 </script>
+
 
 <style scoped>
 .auth-wrapper {

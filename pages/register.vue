@@ -63,7 +63,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRuntimeConfig } from '#imports'
 import { Eye as LucideEye, EyeOff as LucideEyeOff } from 'lucide-vue-next'
 
 const router = useRouter()
@@ -73,10 +73,7 @@ const confirmPassword = ref('')
 const showPassword = ref(false)
 const showConfirm = ref(false)
 
-// Dummy user list simpan di memori (tanpa persist)
-const dummyUsers = ref([])
-
-const handleRegister = () => {
+const handleRegister = async () => {
   if (!email.value || !password.value || !confirmPassword.value) {
     alert('Harap lengkapi semua field.')
     return
@@ -87,17 +84,27 @@ const handleRegister = () => {
     return
   }
 
-  const alreadyExists = dummyUsers.value.find(u => u.email === email.value)
-  if (alreadyExists) {
-    alert('Email sudah terdaftar.')
-    return
-  }
+  try {
+    await $fetch('http://localhost:8080/users/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: {
+        email: email.value,
+        password: password.value
+      }
+    })
 
-  dummyUsers.value.push({ email: email.value, password: password.value })
-  alert('✅ Pendaftaran berhasil! Silakan login.')
-  router.push('/login')
+    alert('✅ Pendaftaran berhasil! Silakan login.')
+    router.push('/login')
+  } catch (err) {
+    const message = err?.data?.message || '❌ Terjadi kesalahan saat mendaftar.'
+    alert(message)
+  }
 }
 </script>
+
 
 <style scoped>
 .auth-wrapper {
