@@ -8,86 +8,95 @@ const route = useRoute()
 const router = useRouter()
 
 // Form fields
+const id = ref(null)
 const amount = ref('')
 const type = ref('expense')
 const category = ref('')
 const note = ref('')
 const date = ref('')
-const budgetName = ref('')
-const id = ref(null)
-
-// Dummy data transaksi
-const dummyTransactions = [
-  {
-    id: 1,
-    type: 'income',
-    amount: 2000000,
-    category: 'Gaji Bulanan',
-    note: 'Gaji bulan Juni',
-    date: '2025-06-01',
-    budgetName: 'Kos Bulanan'
-  },
-  {
-    id: 2,
-    type: 'expense',
-    amount: 30000,
-    category: 'Makan Siang',
-    note: 'Nasi padang',
-    date: '2025-06-02',
-    budgetName: 'Makan Harian'
-  }
-]
-
-// Dummy list anggaran
-const budgetOptions = ['Kos Bulanan', 'Makan Harian', 'Hiburan', 'Transportasi']
+const budgetId = ref('')
+const budgets = ref([])
+const loading = ref(true)
+const saving = ref(false)
 
 // Validasi
 const isValid = computed(() =>
-  amount.value && category.value && date.value && budgetName.value
+  amount.value && category.value && date.value && budgetId.value
 )
 
+// Load list anggaran
+const loadBudgets = async () => {
+  const token = localStorage.getItem('token')
+  const res = await $fetch('http://localhost:8080/budgets/', {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  budgets.value = res?.data || res
+}
+
 // Load data transaksi
-const loadTransaction = () => {
-  const target = dummyTransactions.find(t => t.id === Number(route.params.id))
+const loadTransaction = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    const res = await $fetch(`http://localhost:8080/transactions/${route.params.id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
 
-  if (!target) {
-    alert('Transaksi tidak ditemukan.')
+    id.value = res.id
+    amount.value = res.nominal
+    type.value = res.jenis === 'pemasukan' ? 'income' : 'expense'
+    category.value = res.kategori
+    note.value = res.catatan || ''
+    date.value = res.tanggal.split('T')[0]
+    budgetId.value = res.budget_id
+  } catch (err) {
+    alert('❌ Gagal memuat data transaksi.')
     router.push('/transaction')
-    return
+  } finally {
+    loading.value = false
   }
-
-  id.value = target.id
-  amount.value = target.amount
-  type.value = target.type
-  category.value = target.category
-  note.value = target.note || ''
-  date.value = target.date
-  budgetName.value = target.budgetName || ''
 }
 
-// Simulasi update
-const updateTransaction = () => {
-  const payload = {
-    id: id.value,
-    amount: Number(amount.value),
-    type: type.value,
-    category: category.value,
-    note: note.value,
-    date: date.value,
-    budgetName: budgetName.value,
-    updatedAt: new Date().toISOString()
-  }
+// Simpan perubahan
+const updateTransaction = async () => {
+  try {
+    saving.value = true
+    const token = localStorage.getItem('token')
 
-  console.log('📦 Update transaksi:', payload)
-  alert('✅ Perubahan berhasil disimpan (simulasi)')
-  router.push(`/transaction/${id.value}`)
+    const payload = {
+      nominal: Number(amount.value),
+      jenis: type.value === 'income' ? 'pemasukan' : 'pengeluaran',
+      kategori: category.value,
+      catatan: note.value,
+      tanggal: new Date(date.value).toISOString(),
+      budget_id: Number(budgetId.value)
+    }
+
+    await $fetch(`http://localhost:8080/transactions/${id.value}`, {
+      method: 'PUT',
+      body: payload,
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+
+    alert('✅ Transaksi berhasil diperbarui.')
+    router.push(`/transaction/${id.value}`)
+  } catch (err) {
+    console.error(err)
+    alert('❌ Gagal menyimpan perubahan.')
+  } finally {
+    saving.value = false
+  }
 }
 
-onMounted(loadTransaction)
+onMounted(async () => {
+  await loadBudgets()
+  await loadTransaction()
+})
 </script>
 
 <template>
-  <div class="page-wrapper">
+  <div class="page-wrapper" v-if="!loading">
     <h2 class="page-title">Edit Transaksi</h2>
 
     <div class="form-group">
@@ -110,9 +119,11 @@ onMounted(loadTransaction)
 
     <div class="form-group">
       <label>Masuk ke Anggaran</label>
-      <select v-model="budgetName" class="input">
+      <select v-model="budgetId" class="input">
         <option disabled value="">-- Pilih Anggaran --</option>
-        <option v-for="b in budgetOptions" :key="b" :value="b">{{ b }}</option>
+        <option v-for="b in budgets" :key="b.id" :value="b.id">
+          {{ b.deskripsi }}
+        </option>
       </select>
     </div>
 
@@ -126,8 +137,8 @@ onMounted(loadTransaction)
       <textarea v-model="note" class="input" rows="3" />
     </div>
 
-    <button class="btn full-width" :disabled="!isValid" @click="updateTransaction">
-      SIMPAN PERUBAHAN
+    <button class="btn full-width" :disabled="!isValid || saving" @click="updateTransaction">
+      {{ saving ? 'Menyimpan...' : 'SIMPAN PERUBAHAN' }}
     </button>
   </div>
 </template>

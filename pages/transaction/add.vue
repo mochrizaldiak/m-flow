@@ -1,48 +1,83 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 definePageMeta({ layout: 'logged-in' })
 
 const router = useRouter()
 
-// Form data
+// Form state
 const amount = ref('')
 const type = ref('expense')
 const category = ref('')
 const note = ref('')
 const date = ref('')
 const selectedBudget = ref('')
-
-// Dummy budget list
-const dummyBudgets = [
-  { id: 1, name: 'Kos Bulanan' },
-  { id: 2, name: 'Makan Harian' },
-  { id: 3, name: 'Hiburan' }
-]
+const budgets = ref([])
+const loadingBudgets = ref(false)
+const submitting = ref(false)
 
 // Validasi form
 const isValid = computed(() =>
   amount.value && category.value && date.value && selectedBudget.value
 )
 
-// Simpan transaksi (dummy)
-const saveTransaction = async () => {
-  const payload = {
-    type: type.value,
-    amount: Number(amount.value),
-    category: category.value,
-    note: note.value,
-    date: date.value,
-    budgetId: selectedBudget.value,
-    createdAt: new Date().toISOString()
+// Fetch budget dari API
+const fetchBudgets = async () => {
+  try {
+    loadingBudgets.value = true
+    const token = localStorage.getItem('token')
+
+    const res = await $fetch('http://localhost:8080/budgets/', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+
+    budgets.value = res?.data || res || []
+  } catch (err) {
+    console.error('Gagal memuat anggaran:', err)
+    budgets.value = []
+  } finally {
+    loadingBudgets.value = false
   }
-
-  console.log('📦 Transaksi siap dikirim:', payload)
-
-  alert('✅ Transaksi berhasil disiapkan!')
-  router.push('/transaction')
 }
+
+// Simpan transaksi ke backend
+const saveTransaction = async () => {
+  try {
+    submitting.value = true
+
+    const token = localStorage.getItem('token')
+
+    const payload = {
+      nominal: Number(amount.value),
+      jenis: type.value,
+      kategori: category.value,
+      catatan: note.value,
+      tanggal: new Date(date.value).toISOString(),
+      budget_id: Number(selectedBudget.value)
+    }
+
+    await $fetch('http://localhost:8080/transactions/', {
+      method: 'POST',
+      body: payload,
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+
+    alert('✅ Transaksi berhasil ditambahkan!')
+    router.push('/transaction')
+  } catch (err) {
+    console.error('Gagal menyimpan transaksi:', err)
+    alert('❌ Gagal menyimpan transaksi.')
+  } finally {
+    submitting.value = false
+  }
+}
+
+onMounted(fetchBudgets)
 </script>
 
 <template>
@@ -57,8 +92,8 @@ const saveTransaction = async () => {
     <div class="form-group">
       <label>Jenis</label>
       <div class="radio-group">
-        <label><input type="radio" value="income" v-model="type" /> Pemasukan</label>
-        <label><input type="radio" value="expense" v-model="type" /> Pengeluaran</label>
+        <label><input type="radio" value="pemasukan" v-model="type" /> Pemasukan</label>
+        <label><input type="radio" value="pengeluaran" v-model="type" /> Pengeluaran</label>
       </div>
     </div>
 
@@ -76,8 +111,12 @@ const saveTransaction = async () => {
       <label>Masukkan ke Anggaran</label>
       <select v-model="selectedBudget" class="input">
         <option disabled value="">Pilih anggaran</option>
-        <option v-for="b in dummyBudgets" :key="b.id" :value="b.name">
-          {{ b.name }}
+        <option
+          v-for="b in budgets"
+          :key="b.id"
+          :value="b.id"
+        >
+          {{ b.deskripsi }}
         </option>
       </select>
     </div>
@@ -87,8 +126,8 @@ const saveTransaction = async () => {
       <textarea v-model="note" class="input" rows="3" />
     </div>
 
-    <button class="btn full-width" :disabled="!isValid" @click="saveTransaction">
-      SIMPAN
+    <button class="btn full-width" :disabled="!isValid || submitting" @click="saveTransaction">
+      {{ submitting ? 'Menyimpan...' : 'SIMPAN' }}
     </button>
   </div>
 </template>

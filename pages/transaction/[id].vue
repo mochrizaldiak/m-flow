@@ -6,46 +6,60 @@ definePageMeta({ layout: 'logged-in' })
 
 const route = useRoute()
 const router = useRouter()
-
 const transaction = ref(null)
+const loading = ref(true)
 
-const dummyTransactions = [
-  {
-    id: 1,
-    type: 'income',
-    amount: 2000000,
-    category: 'Gaji Bulanan',
-    date: '2025-06-01',
-    note: 'Gaji bulan Juni',
-    budgetName: 'Kos Bulanan'
-  },
-  {
-    id: 2,
-    type: 'expense',
-    amount: 30000,
-    category: 'Makan Siang',
-    date: '2025-06-02',
-    note: 'Nasi padang',
-    budgetName: 'Makan Harian'
-  }
-]
+const loadTransaction = async () => {
+  try {
+    const id = route.params.id
+    const token = localStorage.getItem('token')
 
-const loadTransaction = () => {
-  const id = Number(route.params.id)
-  const found = dummyTransactions.find((item) => item.id === id)
+    const res = await $fetch(`http://localhost:8080/transactions/${id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
 
-  if (!found) {
+    transaction.value = {
+      id: res.id,
+      type: res.jenis === 'pemasukan' ? 'income' : 'expense',
+      amount: res.nominal,
+      category: res.kategori,
+      date: new Date(res.tanggal).toLocaleDateString('id-ID', {
+        year: 'numeric', month: 'long', day: 'numeric'
+      }),
+      note: res.catatan || '-',
+      budgetName: res.budget?.deskripsi || '-'
+    }
+  } catch (err) {
+    console.error('Gagal mengambil transaksi:', err)
     alert('Transaksi tidak ditemukan.')
     router.push('/transaction')
-    return
+  } finally {
+    loading.value = false
   }
-
-  transaction.value = found
 }
 
-const handleDelete = () => {
-  alert('(Dummy) Transaksi akan dihapus (belum implement).')
-  router.push('/transaction')
+const handleDelete = async () => {
+  const confirmDelete = confirm('Apakah kamu yakin ingin menghapus transaksi ini?')
+
+  if (!confirmDelete) return
+
+  try {
+    const token = localStorage.getItem('token')
+    await $fetch(`http://localhost:8080/transactions/${transaction.value.id}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+
+    alert('✅ Transaksi berhasil dihapus.')
+    router.push('/transaction')
+  } catch (err) {
+    console.error('Gagal menghapus transaksi:', err)
+    alert('❌ Gagal menghapus transaksi.')
+  }
 }
 
 const handleEdit = () => {

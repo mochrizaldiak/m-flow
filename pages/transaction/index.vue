@@ -7,44 +7,38 @@ definePageMeta({ layout: 'logged-in' })
 
 const router = useRouter()
 const transaksiList = ref([])
+const loading = ref(false)
+const error = ref(false)
 
-const dummyTransactions = [
-  {
-    id: 1,
-    type: 'income',
-    amount: 2000000,
-    category: 'Gaji Bulanan',
-    date: '2025-06-01',
-    budgetName: 'Kos Bulanan'
-  },
-  {
-    id: 2,
-    type: 'expense',
-    amount: 30000,
-    category: 'Makan Siang',
-    date: '2025-06-02',
-    budgetName: 'Makan Harian'
-  },
-  {
-    id: 3,
-    type: 'expense',
-    amount: 100000,
-    category: 'Pulsa',
-    date: '2025-06-03',
-    budgetName: 'Komunikasi'
-  },
-  {
-    id: 4,
-    type: 'income',
-    amount: 50000,
-    category: 'Freelance',
-    date: '2025-06-04',
-    budgetName: 'Hiburan'
+const loadTransaksi = async () => {
+  try {
+    loading.value = true
+    error.value = false
+
+    const token = localStorage.getItem('token')
+
+    const res = await $fetch('http://localhost:8080/transactions/', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+
+    transaksiList.value = (res?.data || res || []).map(item => ({
+      id: item.id,
+      type: item.jenis === 'pemasukan' ? 'income' : 'expense',
+      amount: item.nominal,
+      category: item.kategori,
+      date: new Date(item.tanggal).toLocaleDateString('id-ID', {
+        year: 'numeric', month: 'long', day: 'numeric'
+      }),
+      budgetName: item.budget.deskripsi || '-'
+    }))
+  } catch (err) {
+    console.error('Gagal fetch transaksi:', err)
+    error.value = true
+  } finally {
+    loading.value = false
   }
-]
-
-const loadTransaksi = () => {
-  transaksiList.value = dummyTransactions
 }
 
 const toTambahTransaksi = () => {
@@ -61,9 +55,9 @@ onMounted(loadTransaksi)
       <button class="btn add-btn" @click="toTambahTransaksi">+ Tambah</button>
     </div>
 
-    <div v-if="transaksiList.length === 0" class="empty-state">
-      Belum ada transaksi tercatat. Yuk mulai catat sekarang!
-    </div>
+    <div v-if="loading" class="loading-state">Memuat transaksi...</div>
+    <div v-else-if="error" class="error-state">Gagal memuat transaksi.</div>
+    <div v-else-if="transaksiList.length === 0" class="empty-state">Belum ada transaksi.</div>
 
     <div v-else class="transaksi-list">
       <TransactionCard
@@ -110,7 +104,9 @@ onMounted(loadTransaksi)
   cursor: pointer;
 }
 
-.empty-state {
+.empty-state,
+.loading-state,
+.error-state {
   text-align: center;
   color: #888;
   font-size: 14px;
