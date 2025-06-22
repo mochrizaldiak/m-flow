@@ -1,17 +1,36 @@
 <script setup>
-defineProps({
+import { computed } from 'vue'
+import { marked } from 'marked'
+
+const props = defineProps({
   title: String,
-  content: String,
+  content: String, // masih markdown
   category: String,
   date: String
+})
+
+// Convert markdown ke HTML lalu truncate hasil teksnya
+const truncatedContent = computed(() => {
+  if (!props.content) return ''
+  const rawHTML = marked.parse(props.content)
+  const temp = document.createElement('div')
+  temp.innerHTML = rawHTML
+  const text = temp.textContent || temp.innerText || ''
+  const preview = text.length > 100 ? text.slice(0, 100) + '...' : text
+  return preview
 })
 </script>
 
 <template>
   <div class="article-card">
-    <div class="article-meta">{{ category }} • {{ date }}</div>
+    <div class="article-meta">
+      {{ category }} •
+      {{ new Date(date).toLocaleDateString('id-ID', {
+        year: 'numeric', month: 'long', day: 'numeric'
+      }) }}
+    </div>
     <div class="article-title">{{ title }}</div>
-    <div class="article-content">{{ content }}</div>
+    <div class="article-content">{{ truncatedContent }}</div>
   </div>
 </template>
 

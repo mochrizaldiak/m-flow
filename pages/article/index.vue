@@ -1,5 +1,6 @@
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { useDebounceFn } from '@vueuse/core'
 import ArticleCard from '~/components/ArticleCard.vue'
 
 definePageMeta({ layout: 'logged-in' })
@@ -7,59 +8,77 @@ definePageMeta({ layout: 'logged-in' })
 // State
 const searchQuery = ref('')
 const selectedCategory = ref('all')
-const selectedSort = ref('newest')
+const selectedSort = ref('tanggal_desc')
 const showBackTop = ref(false)
 const headerRef = ref(null)
+const articles = ref([])
+const loading = ref(false)
+const empty = ref(false)
 
 // Constants
 const categories = ['all', 'finance', 'saving', 'budgeting']
 const sortOptions = [
-  { label: 'A → Z', value: 'az' },
-  { label: 'Z → A', value: 'za' },
-  { label: 'Terbaru', value: 'newest' },
-  { label: 'Terlama', value: 'oldest' }
+  { label: 'A → Z', value: 'judul_asc' },
+  { label: 'Z → A', value: 'judul_desc' },
+  { label: 'Terbaru', value: 'tanggal_desc' },
+  { label: 'Terlama', value: 'tanggal_asc' }
 ]
 
-// Dummy data
-const dummyArticles = [
-  { id: 1, title: 'Cara Mengatur Uang dengan Mudah', content: 'Belajar dasar pengelolaan keuangan pribadi...', category: 'finance', date: '2025-06-16' },
-  { id: 2, title: 'Tips Menabung Buat Mahasiswa', content: 'Tips sederhana agar bisa konsisten menabung...', category: 'saving', date: '2025-06-10' },
-  { id: 3, title: 'Kenapa Budgeting Itu Penting?', content: 'Budgeting membantu kamu menghindari pemborosan...', category: 'budgeting', date: '2025-05-28' },
-  { id: 4, title: 'Memahami Fixed vs Variable Expense', content: 'Pahami jenis pengeluaran agar bisa kontrol cash flow...', category: 'finance', date: '2025-05-20' },
-  { id: 5, title: '5 Langkah Membuat Dana Darurat', content: 'Dana darurat wajib dimiliki...', category: 'saving', date: '2025-05-15' },
-  { id: 6, title: 'Cara Mencatat Pengeluaran Harian', content: 'Catat pengeluaran setiap hari untuk kontrol uang...', category: 'budgeting', date: '2025-05-10' },
-  { id: 7, title: 'Apa Itu Financial Goal?', content: 'Menetapkan tujuan finansial membantumu lebih fokus...', category: 'finance', date: '2025-05-05' },
-  { id: 8, title: 'Tips Hidup Hemat di Kost', content: 'Tips hidup hemat tapi tetap nyaman...', category: 'saving', date: '2025-04-28' },
-  { id: 9, title: 'Menggunakan Amplop untuk Budget', content: 'Metode amplop membatasi pengeluaran per kategori...', category: 'budgeting', date: '2025-04-20' },
-  { id: 10, title: 'Mengenal Aplikasi Keuangan Pribadi', content: 'Aplikasi seperti M-Flow bantu atur keuangan...', category: 'finance', date: '2025-04-15' }
-]
+// Fetch from API
+const fetchArticles = async () => {
+  try {
+    loading.value = true
+    empty.value = false
 
-// Filtered + sorted result
-const filteredArticles = computed(() => {
-  return dummyArticles
-    .filter(article => {
-      const matchCategory = selectedCategory.value === 'all' || article.category === selectedCategory.value
-      const matchSearch =
-        article.title.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-        article.content.toLowerCase().includes(searchQuery.value.toLowerCase())
-      return matchCategory && matchSearch
+    const params = {
+      page: 1,
+      limit: 100
+    }
+
+    if (searchQuery.value) params.search = searchQuery.value
+    if (selectedCategory.value !== 'all') params.kategori = selectedCategory.value
+    if (selectedSort.value) params.sort = selectedSort.value
+
+    const res = await $fetch('http://localhost:8080/articles/', {
+      method: 'GET',
+      params
     })
-    .sort((a, b) => {
-      if (selectedSort.value === 'az') return a.title.localeCompare(b.title)
-      if (selectedSort.value === 'za') return b.title.localeCompare(a.title)
-      if (selectedSort.value === 'newest') return new Date(b.date) - new Date(a.date)
-      if (selectedSort.value === 'oldest') return new Date(a.date) - new Date(b.date)
-      return 0
-    })
+
+    const data = res?.data || res || []
+    articles.value = data
+    empty.value = data.length === 0
+  } catch (err) {
+    console.error('Gagal fetch artikel:', err)
+    articles.value = []
+    empty.value = true
+  } finally {
+    loading.value = false
+  }
+}
+
+// Debounce pencarian
+const debouncedSearch = useDebounceFn(() => {
+  fetchArticles()
+}, 500)
+
+watch(searchQuery, () => {
+  debouncedSearch()
 })
 
-// Actions
+// Watch kategori dan sort langsung trigger fetch
+watch([selectedCategory, selectedSort], () => {
+  fetchArticles()
+})
+
+// Reset filter
 const resetFilters = () => {
   searchQuery.value = ''
   selectedCategory.value = 'all'
   selectedSort.value = 'newest'
+  fetchArticles()
 }
 
+// Scroll
 const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
@@ -67,9 +86,12 @@ const scrollToTop = () => {
 // Observer
 let observer
 onMounted(() => {
+  fetchArticles()
+
   observer = new IntersectionObserver(([entry]) => {
     showBackTop.value = !entry.isIntersecting
   }, { threshold: 0.1 })
+
   if (headerRef.value) observer.observe(headerRef.value)
 })
 
@@ -93,7 +115,11 @@ onBeforeUnmount(() => {
       <div class="filter-bar">
         <select v-model="selectedCategory" class="dropdown">
           <option value="all">Semua Kategori</option>
-          <option v-for="cat in categories.filter(c => c !== 'all')" :key="cat" :value="cat">
+          <option
+            v-for="cat in categories.filter(c => c !== 'all')"
+            :key="cat"
+            :value="cat"
+          >
             {{ cat.charAt(0).toUpperCase() + cat.slice(1) }}
           </option>
         </select>
@@ -108,20 +134,29 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
+    <!-- Loading -->
+    <div v-if="loading" class="loading">Sedang memuat artikel...</div>
+
+    <!-- Empty -->
+    <div v-else-if="empty" class="empty">Tidak ada artikel ditemukan.</div>
+
+    <!-- Artikel -->
     <NuxtLink
-      v-for="article in filteredArticles"
+      v-else
+      v-for="article in articles"
       :key="article.id"
       :to="`/article/${article.id}`"
       class="article-link"
     >
       <ArticleCard
-        :title="article.title"
-        :content="article.content"
-        :category="article.category"
-        :date="article.date"
+        :title="article.judul"
+        :content="article.konten"
+        :category="article.kategori"
+        :date="article.tanggal"
       />
     </NuxtLink>
 
+    <!-- Back to top -->
     <transition name="fade">
       <button v-if="showBackTop" class="back-top-btn" @click="scrollToTop">
         ↑ Kembali ke Atas
@@ -194,6 +229,14 @@ onBeforeUnmount(() => {
 .article-link {
   text-decoration: none;
   color: inherit;
+}
+
+.loading,
+.empty {
+  text-align: center;
+  color: var(--color-text-light);
+  margin-top: 48px;
+  font-size: 14px;
 }
 
 .back-top-btn {
