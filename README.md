@@ -97,7 +97,7 @@ NUXT_API_BASE=http://localhost:8080
 ## 👥 Kontributor
 
 - 🧑 Rizaldi (Frontend)
-- 🧑‍💻 Kamu sendiri (Backend) [mflow-service](https://github.com/mochrizaldiak/mflow-service)
+- 🧑‍💻 Rizaldi (Backend) [mflow-service](https://github.com/mochrizaldiak/mflow-service)
 
 ---
 
