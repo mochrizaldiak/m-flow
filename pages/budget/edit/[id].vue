@@ -9,14 +9,14 @@ const router = useRouter()
 
 const id = ref(null)
 const name = ref('')
-const type = ref('primary')
+const type = ref('primer')
 const start = ref('')
-const end = ref('')
+const period = ref('D')
 const description = ref('')
 const loading = ref(true)
 
 const isValid = computed(() =>
-  name.value && start.value && end.value
+  name.value && start.value && period.value
 )
 
 const loadBudget = async () => {
@@ -31,9 +31,9 @@ const loadBudget = async () => {
 
     id.value = res.id
     name.value = res.nama
-    type.value = res.jenis_anggaran === 'primer' ? 'primary' : 'non-primary'
+    type.value = res.jenis_anggaran
     start.value = res.tanggal?.split('T')[0] || ''
-    end.value = res.tanggal_akhir?.split('T')[0] || ''
+    period.value = res.jenis_periode || 'D'
     description.value = res.deskripsi || ''
   } catch (err) {
     console.error('Gagal mengambil anggaran:', err)
@@ -49,9 +49,9 @@ const updateBudget = async () => {
     const token = localStorage.getItem('token')
     const payload = {
       nama: name.value,
-      jenis_anggaran: type.value === 'primary' ? 'primer' : 'non-primer',
-      tanggal: start.value,
-      tanggal_akhir: end.value,
+      jenis_anggaran: type.value,
+      tanggal: new Date(start.value).toISOString(),
+      jenis_periode: period.value,
       deskripsi: description.value
     }
 
@@ -79,15 +79,15 @@ onMounted(loadBudget)
     <h2 class="page-title">Edit Anggaran</h2>
 
     <div class="form-group">
-      <label>Nama Anggaran</label>
-      <input v-model="name" type="text" class="input" />
+      <label>Nama Alokasi</label>
+      <input v-model="name" type="text" class="input" placeholder="Contoh: Kos Bulanan" />
     </div>
 
     <div class="form-group">
       <label>Jenis Anggaran</label>
       <div class="radio-group">
-        <label><input type="radio" value="primary" v-model="type" /> Primer</label>
-        <label><input type="radio" value="non-primary" v-model="type" /> Non-primer</label>
+        <label><input type="radio" value="primer" v-model="type" /> Primer</label>
+        <label><input type="radio" value="non-primer" v-model="type" /> Non-primer</label>
       </div>
     </div>
 
@@ -97,8 +97,13 @@ onMounted(loadBudget)
     </div>
 
     <div class="form-group">
-      <label>Tanggal Selesai</label>
-      <input v-model="end" type="date" class="input" />
+      <label>Periode Anggaran</label>
+      <select v-model="period" class="input">
+        <option value="D">Harian</option>
+        <option value="W">Mingguan</option>
+        <option value="M">Bulanan</option>
+        <option value="Y">Tahunan</option>
+      </select>
     </div>
 
     <div class="form-group">
@@ -106,7 +111,11 @@ onMounted(loadBudget)
       <textarea v-model="description" class="input" rows="3" />
     </div>
 
-    <button class="btn full-width" :disabled="!isValid" @click="updateBudget">
+    <button
+      class="btn full-width"
+      :disabled="!isValid"
+      @click="updateBudget"
+    >
       SIMPAN PERUBAHAN
     </button>
   </div>

@@ -29,10 +29,7 @@ const expenseTotal = computed(() =>
 
 const status = computed(() => {
   if (!budget.value) return "";
-  const now = new Date();
-  const end = new Date(budget.value.tanggal_selesai);
-  if (expenseTotal.value > incomeTotal.value) return "Overbudget";
-  if (now > end) return "Selesai";
+  if (budget.value.status === "S") return "Selesai";
   return "Aktif";
 });
 
@@ -71,6 +68,28 @@ const loadData = async () => {
 const handleEdit = () => {
   router.push(`/budget/edit/${budget.value.id}`);
 };
+
+const formatEndDate = (startDateStr, periode) => {
+  const startDate = new Date(startDateStr)
+  const endDate = new Date(startDate)
+
+  switch (periode) {
+    case 'D':
+      endDate.setDate(endDate.getDate() + 1)
+      break
+    case 'W':
+      endDate.setDate(endDate.getDate() + 7)
+      break
+    case 'M':
+      endDate.setDate(endDate.getDate() + 30)
+      break
+    case 'Y':
+      endDate.setFullYear(endDate.getFullYear() + 1)
+      break
+  }
+
+  return endDate.toLocaleDateString('id-ID')
+}
 
 const handleDelete = async () => {
   const confirmDelete = confirm(
@@ -112,8 +131,8 @@ onMounted(loadData);
     <div class="detail-group">
       <label>Periode</label>
       <p>
-        {{ new Date(budget.tanggal_mulai).toLocaleDateString("id-ID") }} →
-        {{ new Date(budget.tanggal_selesai).toLocaleDateString("id-ID") }}
+        {{ new Date(budget.tanggal).toLocaleDateString("id-ID") }} →
+        {{ formatEndDate(budget.tanggal, budget.jenis_periode) }}
       </p>
     </div>
 
@@ -135,7 +154,7 @@ onMounted(loadData);
     </div>
 
     <div class="button-group">
-      <button class="btn edit" @click="handleEdit">✏️ Edit</button>
+      <button class="btn edit" :disabled="budget.status === 'S'" @click="handleEdit">✏️ Edit</button>
       <button class="btn delete" @click="handleDelete">🗑️ Hapus</button>
     </div>
 
@@ -230,6 +249,11 @@ onMounted(loadData);
   .btn.edit {
     background-color: #2c7be5;
     color: white;
+  }
+  .btn.edit:disabled {
+    background-color: #ccc;
+    color: #888;
+    cursor: not-allowed;
   }
   .btn.delete {
     background-color: #f44336;

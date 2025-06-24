@@ -6,7 +6,6 @@ definePageMeta({ layout: 'logged-in', middleware: 'auth' })
 
 const router = useRouter()
 
-// Form state
 const amount = ref('')
 const type = ref('expense')
 const category = ref('')
@@ -17,12 +16,10 @@ const budgets = ref([])
 const loadingBudgets = ref(false)
 const submitting = ref(false)
 
-// Validasi form
 const isValid = computed(() =>
   amount.value && category.value && date.value && selectedBudget.value
 )
 
-// Fetch budget dari API
 const fetchBudgets = async () => {
   try {
     loadingBudgets.value = true
@@ -43,7 +40,6 @@ const fetchBudgets = async () => {
   }
 }
 
-// Simpan transaksi ke backend
 const saveTransaction = async () => {
   try {
     submitting.value = true

@@ -9,12 +9,12 @@ const router = useRouter()
 const name = ref('')
 const type = ref('primer')
 const start = ref('')
-const end = ref('')
 const description = ref('')
+const period = ref('M') // default Bulan
 const loading = ref(false)
 
 const isValid = computed(() =>
-  name.value && start.value && end.value
+  name.value && start.value && period.value
 )
 
 const saveBudget = async () => {
@@ -25,7 +25,7 @@ const saveBudget = async () => {
       nama: name.value,
       jenis_anggaran: type.value,
       tanggal_mulai: start.value,
-      tanggal_selesai: end.value,
+      jenis_periode: period.value,
       deskripsi: description.value
     }
 
@@ -71,8 +71,13 @@ const saveBudget = async () => {
     </div>
 
     <div class="form-group">
-      <label>Tanggal Selesai</label>
-      <input v-model="end" type="date" class="input" />
+      <label>Periode</label>
+      <select v-model="period" class="input">
+        <option value="D">Harian</option>
+        <option value="W">Mingguan</option>
+        <option value="M">Bulanan</option>
+        <option value="Y">Tahunan</option>
+      </select>
     </div>
 
     <div class="form-group">
@@ -89,6 +94,7 @@ const saveBudget = async () => {
     </button>
   </div>
 </template>
+
 
 <style scoped>
 .page-wrapper {
