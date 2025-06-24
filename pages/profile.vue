@@ -5,8 +5,8 @@ import { useRouter } from 'vue-router'
 definePageMeta({ layout: 'logged-in', middleware: 'auth' })
 
 const router = useRouter()
-const nama = ref('User M-Flow')
-const skor = ref(75)
+const nama = ref('')
+const skor = ref(0)
 const status = ref('')
 const rekomendasi = ref('')
 
@@ -22,10 +22,23 @@ const getRekomendasi = (val) => {
   return 'Perlu evaluasi besar terhadap keuanganmu.'
 }
 
-onMounted(() => {
-  nama.value = 'Pengguna M-Flow'
-  status.value = getStatus(skor.value)
-  rekomendasi.value = getRekomendasi(skor.value)
+onMounted(async () => {
+  try {
+    const token = localStorage.getItem('token')
+    const res = await $fetch('http://localhost:8080/users/me', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+
+    nama.value = res.nama || 'Pengguna M-Flow'
+    skor.value = res.skor_keuangan || 0
+    status.value = getStatus(skor.value)
+    rekomendasi.value = getRekomendasi(skor.value)
+  } catch (err) {
+    console.error('Gagal mengambil data pengguna:', err)
+    alert('Gagal mengambil data profil. Silakan coba lagi.')
+  }
 })
 
 const logout = () => {
@@ -36,7 +49,6 @@ const logout = () => {
   }
 }
 </script>
-
 
 <template>
   <div class="profile-wrapper">

@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import BarChart from '~/components/BarChart.vue'
 import ArticleCard from '~/components/ArticleCard.vue'
 
 definePageMeta({ layout: 'logged-in', middleware: 'auth' })
@@ -9,22 +8,6 @@ definePageMeta({ layout: 'logged-in', middleware: 'auth' })
 const router = useRouter()
 
 const now = new Date()
-const currentMonth = now.getMonth()
-const currentYear = now.getFullYear()
-
-const month = ref(currentMonth)
-const year = ref(currentYear)
-
-const months = [
-  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-]
-
-const years = Array.from({ length: currentYear - 2020 + 1 }, (_, i) => 2020 + i)
-
-const availableMonths = computed(() => {
-  return year.value === currentYear ? months.slice(0, currentMonth + 1) : months
-})
 
 const balance = ref(0)
 const fetchSaldo = async () => {
@@ -57,58 +40,55 @@ const fetchArticle = async () => {
   }
 }
 
-const transactions = [
-  { id: 1, type: 'income', amount: 3000000, category: 'Gaji', note: '', date: '2025-06-01' },
-  { id: 2, type: 'expense', amount: 50000, category: 'Makan', note: '', date: '2025-06-02' },
-  { id: 3, type: 'expense', amount: 1200000, category: 'Kos', note: '', date: '2025-06-03' },
-  { id: 4, type: 'expense', amount: 20000, category: 'Ngopi', note: '', date: '2025-06-04' },
-  { id: 5, type: 'income', amount: 250000, category: 'Freelance', note: '', date: '2025-06-06' },
-]
-
-const budgets = [
-  { id: 1, name: 'Kos Bulanan', type: 'primary', income: 2000000, expense: 1800000, start: '2025-06-01', end: '2025-06-30' },
-  { id: 2, name: 'Hiburan', type: 'non-primary', income: 500000, expense: 600000, start: '2025-06-10', end: '2025-06-20' }
-]
-
-const recentTransactions = computed(() => {
-  return transactions
-    .filter(t => {
-      const d = new Date(t.date)
-      return d.getMonth() === month.value && d.getFullYear() === year.value
+const budgets = ref([])
+const fetchBudgets = async () => {
+  try {
+    const token = localStorage.getItem('token')
+    const res = await $fetch('http://localhost:8080/budgets/', {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     })
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
-    .slice(0, 3)
-})
+    const data = res?.data || res || []
 
-const activeBudgets = computed(() => {
-  const today = new Date()
-  return budgets.filter(b => new Date(b.start) <= today && new Date(b.end) >= today)
-})
-
-const toAddBudget = () => {
-  router.push('/budget/add')
+    budgets.value = data.slice(-2).map(b => ({
+      id: b.id,
+      name: b.nama || 'Tanpa nama',
+      type: b.jenis_anggaran === 'primer' ? 'primary' : 'non-primary',
+      income: b.pemasukan || 0,
+      expense: b.pengeluaran || 0,
+      start: b.tanggal.split('T')[0],
+      end: b.tanggal.split('T')[0]
+    }))
+  } catch (err) {
+    console.error('Gagal mengambil anggaran:', err)
+    budgets.value = []
+  }
 }
 
 onMounted(() => {
   fetchSaldo()
   fetchArticle()
+  fetchBudgets()
 })
 </script>
 
 <template>
   <div class="page-wrapper">
+    <!-- SALDO -->
     <div class="card">
       <div class="label">Saldo</div>
       <div class="value">IDR {{ balance.toLocaleString('id-ID') }}</div>
     </div>
 
+    <!-- ANGGARAN -->
     <div class="card">
       <div class="section-header">
         <div class="label">Daftar Anggaran</div>
       </div>
-      <template v-if="activeBudgets.length > 0">
+      <template v-if="budgets.length > 0">
         <div
-          v-for="b in activeBudgets"
+          v-for="b in budgets"
           :key="b.id"
           class="budget-item"
         >
@@ -129,47 +109,15 @@ onMounted(() => {
       <div v-else class="empty-state">Belum ada anggaran bulan ini.</div>
     </div>
 
-    <div class="warning-box" v-if="activeBudgets.some(b => b.expense > b.income)">
+    <!-- WARNING -->
+    <div
+      class="warning-box"
+      v-if="budgets.some(b => b.expense > b.income)"
+    >
       ⚠️ Beberapa anggaran kamu melebihi batas!
     </div>
 
-    <!-- Chart -->
-    <!-- <div class="card">
-      <div class="chart-header">
-        <div class="label">Pemasukan vs Pengeluaran</div>
-        <div class="filter-group">
-          <select v-model="month">
-            <option v-for="(m, i) in availableMonths" :key="i" :value="i">{{ m }}</option>
-          </select>
-          <select v-model="year">
-            <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
-          </select>
-        </div>
-      </div>
-      <BarChart :month="month" :year="year" />
-    </div> -->
-
-    <!-- Transaksi Terbaru -->
-    <!-- <div class="card">
-      <div class="label">Transaksi Terbaru</div>
-      <template v-if="recentTransactions.length > 0">
-        <div
-          v-for="t in recentTransactions"
-          :key="t.id"
-          class="trans-item"
-        >
-          <div class="trans-info">
-            <span :class="t.type">
-              {{ t.type === 'income' ? '+' : '-' }} Rp{{ t.amount.toLocaleString('id-ID') }}
-            </span>
-            <span>{{ t.category }}</span>
-          </div>
-          <div class="trans-date">{{ t.date }}</div>
-        </div>
-      </template>
-      <div v-else class="empty-state">Belum ada transaksi bulan ini.</div>
-    </div> -->
-
+    <!-- ARTIKEL -->
     <div>
       <div class="label">Rekomendasi Artikel</div>
       <template v-if="recommendedArticle">
@@ -186,6 +134,7 @@ onMounted(() => {
     </div>
   </div>
 </template>
+
 
 <style scoped>
 .page-wrapper {

@@ -1,75 +1,106 @@
-# Nuxt Minimal Starter
+# M-Flow – Manajemen Keuangan Mahasiswa
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+Aplikasi berbasis web untuk membantu mahasiswa mengelola keuangan, membuat anggaran, mencatat transaksi, dan mendapatkan rekomendasi finansial secara personal.
 
-## Setup
+## 🛠️ Fitur Utama
 
-Make sure to install dependencies:
+- 🔐 Autentikasi (login/register)
+- 💸 Catatan transaksi pemasukan dan pengeluaran
+- 🎯 Manajemen anggaran (primer & non-primer)
+- 📊 Visualisasi saldo dan transaksi
+- 📚 Artikel edukasi keuangan
+- ✅ Dashboard skor keuangan dan rekomendasi
+
+---
+
+## 🚀 Menjalankan Proyek
+
+### 1. **Clone Repository**
 
 ```bash
-# npm
+git clone https://github.com/username/mflow.git
+cd mflow
+```
+
+### 2. **Install Dependencies**
+
+```bash
 npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
 ```
 
-## Development Server
+### 3. **Jalankan Backend (Golang)**
 
-Start the development server on `http://localhost:3000`:
+Pastikan server Golang berjalan di `http://localhost:8080`.
+
+Contoh:
 
 ```bash
-# npm
+cd backend
+go run main.go
+```
+
+> ⚠️ Pastikan database sudah terhubung (misal: PostgreSQL/MySQL) dan migrasi dijalankan jika ada.
+
+### 4. **Jalankan Frontend (Nuxt 3)**
+
+```bash
 npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
 
-## Production
+Frontend akan berjalan di: `http://localhost:3000`
 
-Build the application for production:
+---
 
-```bash
-# npm
-npm run build
+## ⚙️ Konfigurasi
 
-# pnpm
-pnpm build
+### `.env` (opsional)
 
-# yarn
-yarn build
+Jika kamu ingin menyimpan konfigurasi `baseURL`:
 
-# bun
-bun run build
+```env
+NUXT_API_BASE=http://localhost:8080
 ```
 
-Locally preview production build:
+> Gunakan `$fetch` seperti ini:
+> ```js
+> const res = await $fetch('/users/me', { baseURL: useRuntimeConfig().public.NUXT_API_BASE })
+> ```
 
-```bash
-# npm
-npm run preview
+---
 
-# pnpm
-pnpm preview
+## 🔐 Autentikasi
 
-# yarn
-yarn preview
+- Token disimpan di `localStorage` (key: `token`)
+- Halaman selain `/login` dan `/register` akan dicek menggunakan middleware `auth`
+- Pengguna yang sudah login tidak bisa mengakses `/login` dan `/register`
 
-# bun
-bun run preview
+---
+
+## 📁 Struktur Direktori Utama
+
+```
+├─ pages/
+│  ├─ index.vue              → Dashboard
+│  ├─ login.vue              → Login user
+│  ├─ register.vue           → Register user
+│  ├─ transaction/           → Transaksi (add/edit/detail)
+│  ├─ budget/                → Anggaran (add/edit/detail)
+│  ├─ article/               → Artikel
+│  ├─ profile.vue            → Profil pengguna
+├─ components/
+├─ middleware/
+│  └─ auth.js                → Cek token untuk akses halaman
 ```
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+---
+
+## 👥 Kontributor
+
+- 🧑 Rizaldi (Frontend)
+- 🧑‍💻 Kamu sendiri (Backend) [mflow-service](https://github.com/mochrizaldiak/mflow-service)
+
+---
+
+## ✅ Lisensi
+
+MIT License. Silakan digunakan dan dikembangkan lebih lanjut sesuai kebutuhan.
